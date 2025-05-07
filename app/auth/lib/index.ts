@@ -1,0 +1,204 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+import { axiosClient } from "@/lib/axiosClient";
+import { signIn, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import {
+  AdminResponse,
+  LoginPayload,
+  LoginResponse,
+  ProfileResponse,
+  RegisterPayload,
+  RegisterResponse,
+  socialPayload,
+} from "../interface";
+import Swal from "sweetalert2";
+import { Sign } from "crypto";
+import { Session } from "inspector/promises";
+import useAxiosAuth from "@/Hook/useAuthAxios";
+
+export const socialLogin = async (
+  payload: socialPayload
+): Promise<LoginResponse> => {
+  return axiosClient
+    .post("/auth/social-login", payload)
+    .then((res) => res.data);
+};
+
+const useAuthModule = () => {
+  const router = useRouter();
+  const axiosAuthClient = useAxiosAuth();
+  const {data:session} = useSession()
+  const register = async (
+    payload: RegisterPayload
+  ): Promise<RegisterResponse> => {
+    return axiosClient.post("/auth/register", payload).then((res) => res.data);
+  };
+
+  const useRegister = () => {
+    const { mutate, isPending: isLoading } = useMutation(
+
+      {
+        mutationFn: async (payload: RegisterPayload) => register(payload),
+        onSuccess: (response: any) => {
+          Swal.fire({
+            title: "Good job!",
+            text: response.message,
+            icon: "success",
+          });
+          router.push("/auth/verify");
+        },
+        onError: (error: any) => {
+          console.log("error:", error.message);
+          Swal.fire({
+            icon: "error",
+            title: "Oops...",
+            text: error.response?.data?.message || "An error occurred!",
+            footer: '<a href="#">Why do I have this issue?</a>',
+          });
+        },
+      }
+    );
+    return { mutate, isPending: isLoading };
+  };
+  const login = async (payload: LoginPayload): Promise<LoginResponse> => {
+    return axiosClient.post("/auth/login", payload).then((res) => res.data);
+  };
+
+  const useLogin = () => {
+    const { mutate, isPending: isLoading } = useMutation(
+      // (payload: LoginPayload) => login(payload),
+      {
+        mutationFn: async (payload: LoginPayload) => login(payload),
+        onSuccess: async (response: any) => {
+          try {
+            // Tampilkan notifikasi sukses
+            Swal.fire({
+              title: "Good job!",
+              text: response.message,
+              icon: "success",
+            });
+        
+            console.log("Response from backend:", response);
+        
+            // Pastikan data dari backend digunakan untuk signIn
+            const { id, name, email, access_token, refresh_token, roles } = response.data;
+        
+            await signIn("credentials", {
+              id,
+              name,
+              email,
+              accessToken: access_token, // Gunakan data dari backend
+              refreshToken: refresh_token, // Gunakan data dari backend
+              roles, // Gunakan data dari backend
+              redirect: false,
+            });
+        
+            // Jika perlu, arahkan pengguna ke halaman tertentu
+            // router.push("/dashboard"); // Sesuaikan dengan kebutuhan Anda
+          } catch (error) {
+            console.error("Error during signIn:", error);
+            Swal.fire({
+              icon: "error",
+              title: "Oops...",
+              text: "An error occurred during login!",
+            });
+          }
+        },
+        onError: (error: any) => {
+          console.log("error:", error.message);
+          if (error.response.status == 422) {
+            Swal.fire({
+              icon: "error",
+              title: "Oops...",
+              text: error.response.data.message,
+              footer: '<a href="#">Why do I have this issue?</a>',
+            });
+          } else {
+            Swal.fire({
+              icon: "error",
+              title: "Oops...",
+              text: "An error occurred!",
+              footer: '<a href="#">Why do I have this issue?</a>',
+            });
+          }
+        },
+      }
+    );
+    return { mutate, isPending: isLoading };
+    
+  };
+  const getProfile = async (): Promise<ProfileResponse> => {
+    return axiosClient.get("/auth/profile").then((res) => res.data);
+  };
+  const getProfileMember = async (): Promise<ProfileResponse> => {
+    return axiosClient.get("/auth/list/member").then((res) => res.data);
+  };
+
+  const useProfileMember = () => {
+    const { data, isLoading, isFetching } = useQuery({
+      queryKey: ["/auth/profile/list/member"],
+      queryFn: () => getProfileMember(),
+      select: (Response) => Response,
+      staleTime: 1000 * 60 * 60,
+      refetchInterval: 1000 * 60 * 60,
+      refetchOnWindowFocus: false,
+      enabled : session?.user?.id !== undefined, 
+    });
+    return { data, isLoading, isFetching };
+  };
+
+
+  const verify = async (payload: { token: string }): Promise<any> => {
+    return await axiosClient
+      .get(`/auth/verify-email?token=${payload.token}`) // Kirim token sebagai query parameter
+      .then((res) => res.data);
+  };
+
+  const useVerify = () => {
+    const mutate = useMutation({
+      mutationFn: (payload: any) => verify(payload as any),
+      onSuccess: (data) => {
+        console.log("Verify successful", data);
+      },
+    });
+    return mutate;
+  };
+  const getProfileAdmin = async (): Promise<AdminResponse> => {
+    return axiosClient.get("/auth/profile-Admin").then((res) => res.data);
+  };
+
+  const useProfileAdmin = () => {
+    
+    const { data, isLoading, isFetching } = useQuery({
+      queryKey: ["/auth/profile-Admin"],
+      queryFn: () => getProfileAdmin(),
+      select: (Response) => Response,
+      staleTime: 1000 * 60 * 60,
+      refetchInterval: 1000 * 60 * 60,
+      refetchOnWindowFocus: false,
+      enabled : session?.user?.id !== undefined,
+    });
+    return { data, isLoading, isFetching };
+  };
+
+  const useProfile = () => {
+    const { data, isLoading, isFetching } = useQuery({
+      queryKey: ["/auth/profile"],
+      queryFn: () => getProfile(),
+      select: (Response) => Response,
+      staleTime: 1000 * 60 * 60,
+      refetchInterval: 1000 * 60 * 60,
+      refetchOnWindowFocus: false,
+      enabled : session?.user?.id !== undefined, 
+    });
+    return { data, isLoading, isFetching };
+  };
+  
+
+  return { useRegister, useLogin, useProfile, useProfileAdmin, useVerify, useProfileMember };
+};
+
+export default useAuthModule;
