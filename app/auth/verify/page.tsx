@@ -96,7 +96,7 @@ const VerifyEmailPage = () => {
             type="text"
             value={manualToken}
             onChange={(e) => setManualToken(e.target.value)}
-            className="border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="border border-gray-300 text-black rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-red-500"
             placeholder="Enter your token"
           />
           <button

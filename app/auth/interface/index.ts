@@ -70,5 +70,5 @@ export interface MemberResponse extends User {
 }
 
 export interface ProfileResponse extends BaseResponseSuccess {
-  data: User[];
+  data: User;
 }
