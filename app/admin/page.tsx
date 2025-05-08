@@ -24,7 +24,6 @@ const AdminPage = () => {
   // Fetch data admin menggunakan useProfileAdmin
   const { data: admins, isLoading } = useProfileAdmin();
 
-
   console.log("Admin Data:", admins);
 
   if (isLoading) {
@@ -47,17 +46,20 @@ const AdminPage = () => {
           <h2 className="text-xl font-semibold text-gray-800">Admin List</h2>
           <p className="text-gray-600 mt-2">Below is the list of all admins:</p>
           <ul className="mt-4 space-y-2">
-  {admins?.Admins && admins.Admins.length > 0 ? (
-    admins.Admins.map((data, id) => (
-      <li key={id} className="flex items-center">
-        <span className="font-semibold">{data.name}</span>
-        <span className="ml-2 text-gray-600">{data.email}</span>
-      </li>
-    ))
-  ) : (
-    <p className="text-gray-600">No admins found.</p>
-  )}
-</ul>
+            {admins?.data && admins?.data.length > 0 ? (
+              admins?.data.map((data, id) => (
+                <li key={id} className="flex items-center">
+
+                  <span className="font-semibold text-black mr-2">{data.role} :</span>
+
+                  <span className="font-semibold text-black">{data.name}</span>
+                  <span className="ml-2 text-gray-600">{data.email}</span>
+                </li>
+              ))
+            ) : (
+              <p className="text-gray-600">No admins found.</p>
+            )}
+          </ul>
         </div>
 
         <div className="mt-6 flex justify-end">

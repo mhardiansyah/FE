@@ -63,7 +63,10 @@ export interface LoginResponse extends BaseResponseSuccess {
 }
 
 export interface AdminResponse extends User {
-  Admins: User[]; // Tambahkan properti Admins
+  data: User[]; 
+}
+export interface MemberResponse extends User {
+  data: User[]; 
 }
 
 export interface ProfileResponse extends BaseResponseSuccess {

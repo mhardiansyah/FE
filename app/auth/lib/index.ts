@@ -9,6 +9,7 @@ import {
   AdminResponse,
   LoginPayload,
   LoginResponse,
+  MemberResponse,
   ProfileResponse,
   RegisterPayload,
   RegisterResponse,
@@ -95,6 +96,8 @@ const useAuthModule = () => {
               roles, // Gunakan data dari backend
               redirect: false,
             });
+
+            localStorage.setItem("access_token", access_token);
         
             // Jika perlu, arahkan pengguna ke halaman tertentu
             // router.push("/dashboard"); // Sesuaikan dengan kebutuhan Anda
@@ -133,22 +136,7 @@ const useAuthModule = () => {
   const getProfile = async (): Promise<ProfileResponse> => {
     return axiosClient.get("/auth/profile").then((res) => res.data);
   };
-  const getProfileMember = async (): Promise<ProfileResponse> => {
-    return axiosClient.get("/auth/list/member").then((res) => res.data);
-  };
-
-  const useProfileMember = () => {
-    const { data, isLoading, isFetching } = useQuery({
-      queryKey: ["/auth/profile/list/member"],
-      queryFn: () => getProfileMember(),
-      select: (Response) => Response,
-      staleTime: 1000 * 60 * 60,
-      refetchInterval: 1000 * 60 * 60,
-      refetchOnWindowFocus: false,
-      enabled : session?.user?.id !== undefined, 
-    });
-    return { data, isLoading, isFetching };
-  };
+  
 
 
   const verify = async (payload: { token: string }): Promise<any> => {
@@ -167,7 +155,7 @@ const useAuthModule = () => {
     return mutate;
   };
   const getProfileAdmin = async (): Promise<AdminResponse> => {
-    return axiosClient.get("/auth/profile-Admin").then((res) => res.data);
+    return axiosClient.get("/auth/profile-Admin").then((res) => res.data.data);
   };
 
   const useProfileAdmin = () => {
@@ -179,7 +167,24 @@ const useAuthModule = () => {
       staleTime: 1000 * 60 * 60,
       refetchInterval: 1000 * 60 * 60,
       refetchOnWindowFocus: false,
-      enabled : session?.user?.id !== undefined,
+      // enabled : session?.user?.id !== undefined,
+    });
+    return { data, isLoading, isFetching };
+  };
+
+  const getProfileMember = async (): Promise<MemberResponse> => {
+    return axiosClient.get("/auth/profile/list/member").then((res) => res.data.data);
+  };
+
+  const useProfileMember = () => {
+    const { data, isLoading, isFetching } = useQuery({
+      queryKey: ["/auth/profile/list/member"],
+      queryFn: () => getProfileMember(),
+      select: (Response) => Response.data,
+      staleTime: 1000 * 60 * 60,
+      refetchInterval: 1000 * 60 * 60,
+      refetchOnWindowFocus: false,
+      // enabled : session?.user?.id !== undefined, 
     });
     return { data, isLoading, isFetching };
   };

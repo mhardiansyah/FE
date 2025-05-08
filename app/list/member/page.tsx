@@ -7,7 +7,6 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/Button';
 import useAuthModule from '@/app/auth/lib';
-import { rolepayload } from '@/app/auth/interface';
 
 const Member = () => {
   const { data: session } = useSession();
@@ -22,7 +21,8 @@ const Member = () => {
   }, [session, router]);
 
   // Menggunakan hook useProfileMember
-  const { data, isLoading } = useProfileMember();
+  const { data: Members, isLoading } = useProfileMember()
+  console.log("Member Data:", Members);;
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -39,17 +39,18 @@ const Member = () => {
         <div className="bg-white p-6 rounded-md shadow-md">
           <h2 className="text-xl font-semibold text-gray-800">Member List</h2>
           <p className="text-gray-600 mt-2">Below is the list of all members:</p>
-          <ul className="mt-4 space-y-2">
-            {data?.data?.map((member: rolepayload, index: number) => (
-              <li
-                key={index}
-                className="p-4 bg-gray-100 rounded-md shadow-sm flex justify-between items-center"
-              >
-                <span>{member.name}</span>
-                <span className="text-gray-500 text-sm">{member.email}</span>
-              </li>
-            ))}
-          </ul>
+          {Members && Members.length > 0 ? (
+              Members.map((data, id) => (
+
+                <li key={id} className="flex items-center">
+                  <span className="font-semibold text-black mr-2">{data.role} :</span>
+                  <span className="font-semibold text-black">{data.name}  :</span>
+                  <span className="ml-2 text-gray-600">{data.email}</span>
+                </li>
+              ))
+            ) : (
+              <p className="text-gray-600">No admins found.</p>
+            )}
         </div>
         <div className="mt-6 flex justify-end">
           <Button
