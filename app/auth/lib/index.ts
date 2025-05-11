@@ -44,14 +44,14 @@ const useAuthModule = () => {
     const { mutate, isPending: isLoading } = useMutation({
       mutationFn: async (payload: RegisterPayload) => register(payload),
       onSuccess: (response: RegisterResponse) => {
-      Swal.fire({
-        title: "Registration Successful!",
-        text: `Your verification token is: ${response.data.verification_token}`,
-        icon: "success",
-      }).then(() => {
-        router.push(`/auth/verify`);
-      });
-    },
+        Swal.fire({
+          title: "Registration Successful!",
+          text: `Your verification token is: ${response.data.verification_token}`,
+          icon: "success",
+        }).then(() => {
+          router.push(`/auth/verify`);
+        });
+      },
       onError: (error: any) => {
         console.log("error:", error.message);
         Swal.fire({
@@ -113,12 +113,16 @@ const useAuthModule = () => {
         },
         onError: (error: any) => {
           console.log("error:", error.message);
-          if (error.response.status == 422) {
+          if (
+            error.response?.status === 401 ||
+            error.response?.status === 403
+          ) {
             Swal.fire({
               icon: "error",
-              title: "Oops...",
-              text: error.response.data.message,
-              footer: '<a href="#">Why do I have this issue?</a>',
+              title: "Access Denied",
+              text: "Your session has expired or you do not have access.",
+            }).then(() => {
+              router.push("/auth/login"); // Redirect to login page
             });
           } else {
             Swal.fire({
@@ -152,9 +156,7 @@ const useAuthModule = () => {
     });
     return mutate;
   };
-  const resendVerification = async (
-    email: string
-  ): Promise<VerifyResponse> => {
+  const resendVerification = async (email: string): Promise<VerifyResponse> => {
     return await axiosClient
       .post(`/auth/resend-verification`, { email }) // Kirim email sebagai body parameter
       .then((res) => res.data);
@@ -167,12 +169,12 @@ const useAuthModule = () => {
         console.log("Resend verification successful", data);
         Swal.fire({
           title: "Success!",
-          text:  `Your verification token is: ${data.data.verification_token}`,
+          text: `Your verification token is: ${data.data.verification_token}`,
           icon: "success",
           confirmButtonText: "OK",
         }).then(() => {
           router.push("/auth/verify");
-        })
+        });
       },
       onError: (error: any) => {
         console.error("Error during resend verification:", error);
@@ -193,12 +195,29 @@ const useAuthModule = () => {
   const useProfileAdmin = () => {
     const { data, isLoading, isFetching } = useQuery({
       queryKey: ["/auth/profile-Admin"],
-      queryFn: () => getProfileAdmin(),
+      queryFn: async () => {
+        try {
+          return await getProfileAdmin();
+        } catch (error: any) {
+          if (
+            error.response?.status === 401 ||
+            error.response?.status === 403
+          ) {
+            Swal.fire({
+              icon: "error",
+              title: "Access Denied",
+              text: "You do not have permission to access this resource.",
+            }).then(() => {
+              router.push("/auth/login"); // Redirect to login page
+            });
+          }
+          throw error; // Re-throw the error for further handling
+        }
+      },
       select: (Response) => Response,
       staleTime: 1000 * 60 * 60,
       refetchInterval: 1000 * 60 * 60,
       refetchOnWindowFocus: false,
-      // enabled : session?.user?.id !== undefined,
     });
     return { data, isLoading, isFetching };
   };
@@ -225,7 +244,25 @@ const useAuthModule = () => {
   const useProfile = () => {
     const { data, isLoading, isFetching } = useQuery({
       queryKey: ["/auth/profile"],
-      queryFn: () => getProfile(),
+      queryFn: async () => {
+        try {
+          return await getProfile();
+        } catch (error: any) {
+          if (
+            error.response?.status === 401 ||
+            error.response?.status === 403
+          ) {
+            Swal.fire({
+              icon: "error",
+              title: "Unauthorized",
+              text: "You are not authorized to access this resource. Please log in.",
+            }).then(() => {
+              router.push("/auth/login"); // Redirect to login page
+            });
+          }
+          throw error; // Re-throw the error for further handling
+        }
+      },
       select: (Response) => Response,
       staleTime: 1000 * 60 * 60,
       refetchInterval: 1000 * 60 * 60,
