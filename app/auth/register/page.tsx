@@ -1,15 +1,18 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
- 
+
 import { useFormik, Form, FormikProvider, getIn } from "formik";
 import Link from "next/link";
 import * as yup from "yup";
-import { RegisterPayload } from "../interface";
+import { RegisterPayload, RegisterResponse,  } from "../interface";
 import Label from "@/components/Label";
 import Button from "@/components/Button";
 import useAuthModule from "../lib/index";
 import InputText from "@/components/TextInput";
- 
+import { useRouter } from "next/navigation";
+import Swal from "sweetalert2";
+
 export const registerSchema = yup.object().shape({
   name: yup.string().nullable().default("").required("Wajib isi"),
   email: yup
@@ -25,18 +28,39 @@ export const registerSchema = yup.object().shape({
     .required("Wajib isi")
     .min(8, "Minimal 8 karakater"),
 });
- 
+
 const Register = () => {
   const { useRegister } = useAuthModule();
-  const { mutate,  isPending: isloading} = useRegister();
+  const router = useRouter();
+  const { mutate, isPending: isloading } = useRegister();
+
   const formik = useFormik<RegisterPayload>({
     initialValues: registerSchema.getDefault(),
     validationSchema: registerSchema,
     enableReinitialize: true,
     onSubmit: (payload) => {
-      mutate(payload);
+      mutate(payload, {
+        onSuccess: (response: RegisterResponse) => {
+          // Menampilkan token di SweetAlert
+          Swal.fire({
+            title: "Registration Successful!",
+            text: `Your verification token is: ${response.data.verification_token}`,
+            icon: "success",
+            confirmButtonText: "OK",
+          });
+        },
+        onError: (error: any) => {
+          // Menampilkan error jika terjadi kesalahan
+          Swal.fire({
+            icon: "error",
+            title: "Oops...",
+            text: error.response?.data?.message || "An error occurred!",
+          });
+        },
+      });
     },
   });
+
   const {
     handleChange,
     handleSubmit,
@@ -46,13 +70,17 @@ const Register = () => {
     resetForm,
     setValues,
   } = formik;
- 
+
   return (
     <section className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="w-full max-w-md bg-white shadow-lg rounded-lg p-8">
         <div className="text-center mb-6">
-          <h1 className="text-4xl font-bold text-blue-500">Create an Account</h1>
-          <p className="text-gray-600 mt-2">Join us and start your journey today!</p>
+          <h1 className="text-4xl font-bold text-blue-500">
+            Create an Account
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Join us and start your journey today!
+          </p>
         </div>
         <FormikProvider value={formik}>
           <Form className="space-y-6" onSubmit={handleSubmit}>
@@ -109,7 +137,10 @@ const Register = () => {
             <section className="text-center mt-4">
               <p className="text-sm text-gray-600">
                 Already have an account?{" "}
-                <Link href="/auth/login" className="text-blue-500 hover:underline">
+                <Link
+                  href="/auth/login"
+                  className="text-blue-500 hover:underline"
+                >
                   Login here
                 </Link>
               </p>
@@ -120,5 +151,5 @@ const Register = () => {
     </section>
   );
 };
- 
+
 export default Register;

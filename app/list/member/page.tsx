@@ -1,28 +1,31 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-"use client"
+"use client";
 /* eslint-disable react-hooks/rules-of-hooks */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { useEffect } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import Button from '@/components/Button';
-import useAuthModule from '@/app/auth/lib';
+import React, { useEffect } from "react";
+import { signOut, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import Button from "@/components/Button";
+import useAuthModule from "@/app/auth/lib";
 
 const Member = () => {
   const { data: session } = useSession();
   const router = useRouter();
-  const {useProfileMember} = useAuthModule()
+  const { useProfileMember } = useAuthModule();
 
   // Redirect jika user tidak memiliki role user atau admin
   useEffect(() => {
-    if (!session?.user?.roles || !['user', 'admin'].includes(session.user.roles)) {
+    if (
+      !session?.user?.roles ||
+      !["user", "admin"].includes(session.user.roles)
+    ) {
       router.push("/auth/login");
     }
   }, [session, router]);
 
   // Menggunakan hook useProfileMember
-  const { data: Members, isLoading } = useProfileMember()
-  console.log("Member Data:", Members);;
+  const { data: Members, isLoading } = useProfileMember();
+  console.log("Member Data:", Members);
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -38,26 +41,39 @@ const Member = () => {
       <main className="mt-6">
         <div className="bg-white p-6 rounded-md shadow-md">
           <h2 className="text-xl font-semibold text-gray-800">Member List</h2>
-          <p className="text-gray-600 mt-2">Below is the list of all members:</p>
-          {Members && Members.length > 0 ? (
+          <p className="text-gray-600 mt-2">
+            Below is the list of all members:
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+            {Members && Members.length > 0 ? (
               Members.map((data, id) => (
-
-                <li key={id} className="flex items-center">
-                  <span className="font-semibold text-black mr-2">{data.role} :</span>
-                  <span className="font-semibold text-black">{data.name}  :</span>
-                  <span className="ml-2 text-gray-600">{data.email}</span>
-                </li>
+                <div
+                  key={id}
+                  className="bg-white border border-gray-200 rounded-lg shadow-md p-4 flex flex-col items-start"
+                >
+                  <h3 className="text-lg font-semibold text-blue-600">
+                    {data.name}
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    <span className="font-semibold">Role:</span> {data.role}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    <span className="font-semibold">Email:</span> {data.email}
+                  </p>
+                </div>
               ))
             ) : (
-              <p className="text-gray-600">No admins found.</p>
+              <p className="text-gray-600 col-span-full">No members found.</p>
             )}
+          </div>
         </div>
         <div className="mt-6 flex justify-end">
           <Button
             title="Logout"
             colorSchema="red"
             onClick={() => {
-              router.push("/auth/logout");
+              localStorage.removeItem("access_token");
+              signOut();
             }}
           />
         </div>

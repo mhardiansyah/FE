@@ -14,11 +14,13 @@ import {
   RegisterPayload,
   RegisterResponse,
   socialPayload,
+  VerifiyPayload,
 } from "../interface";
 import Swal from "sweetalert2";
 import { Sign } from "crypto";
 import { Session } from "inspector/promises";
 import useAxiosAuth from "@/Hook/useAuthAxios";
+import { VerifyResponse } from "./../interface/index";
 
 export const socialLogin = async (
   payload: socialPayload
@@ -31,7 +33,7 @@ export const socialLogin = async (
 const useAuthModule = () => {
   const router = useRouter();
   const axiosAuthClient = useAxiosAuth();
-  const {data:session} = useSession()
+  const { data: session } = useSession();
   const register = async (
     payload: RegisterPayload
   ): Promise<RegisterResponse> => {
@@ -39,29 +41,27 @@ const useAuthModule = () => {
   };
 
   const useRegister = () => {
-    const { mutate, isPending: isLoading } = useMutation(
-
-      {
-        mutationFn: async (payload: RegisterPayload) => register(payload),
-        onSuccess: (response: any) => {
-          Swal.fire({
-            title: "Good job!",
-            text: response.message,
-            icon: "success",
-          });
-          router.push("/auth/verify");
-        },
-        onError: (error: any) => {
-          console.log("error:", error.message);
-          Swal.fire({
-            icon: "error",
-            title: "Oops...",
-            text: error.response?.data?.message || "An error occurred!",
-            footer: '<a href="#">Why do I have this issue?</a>',
-          });
-        },
-      }
-    );
+    const { mutate, isPending: isLoading } = useMutation({
+      mutationFn: async (payload: RegisterPayload) => register(payload),
+      onSuccess: (response: RegisterResponse) => {
+      Swal.fire({
+        title: "Registration Successful!",
+        text: `Your verification token is: ${response.data.verification_token}`,
+        icon: "success",
+      }).then(() => {
+        router.push(`/auth/verify`);
+      });
+    },
+      onError: (error: any) => {
+        console.log("error:", error.message);
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: error.response?.data?.message || "An error occurred!",
+          footer: '<a href="#">Why do I have this issue?</a>',
+        });
+      },
+    });
     return { mutate, isPending: isLoading };
   };
   const login = async (payload: LoginPayload): Promise<LoginResponse> => {
@@ -81,12 +81,13 @@ const useAuthModule = () => {
               text: response.message,
               icon: "success",
             });
-        
+
             console.log("Response from backend:", response);
-        
+
             // Pastikan data dari backend digunakan untuk signIn
-            const { id, name, email, access_token, refresh_token, roles } = response.data;
-        
+            const { id, name, email, access_token, refresh_token, roles } =
+              response.data;
+
             await signIn("credentials", {
               id,
               name,
@@ -98,7 +99,7 @@ const useAuthModule = () => {
             });
 
             localStorage.setItem("access_token", access_token);
-        
+
             // Jika perlu, arahkan pengguna ke halaman tertentu
             // router.push("/dashboard"); // Sesuaikan dengan kebutuhan Anda
           } catch (error) {
@@ -131,35 +132,65 @@ const useAuthModule = () => {
       }
     );
     return { mutate, isPending: isLoading };
-    
   };
   const getProfile = async (): Promise<ProfileResponse> => {
     return axiosClient.get("/auth/profile").then((res) => res.data);
   };
-  
 
-
-  const verify = async (payload: { token: string }): Promise<any> => {
+  const verify = async (payload: VerifiyPayload): Promise<VerifyResponse> => {
     return await axiosClient
-      .get(`/auth/verify-email?token=${payload.token}`) // Kirim token sebagai query parameter
+      .get(`/auth/verify-email?token=${payload.verification_token}`) // Kirim token sebagai query parameter
       .then((res) => res.data);
   };
 
   const useVerify = () => {
     const mutate = useMutation({
-      mutationFn: (payload: any) => verify(payload as any),
+      mutationFn: (payload: VerifiyPayload) => verify(payload),
       onSuccess: (data) => {
         console.log("Verify successful", data);
       },
     });
     return mutate;
   };
+  const resendVerification = async (
+    email: string
+  ): Promise<VerifyResponse> => {
+    return await axiosClient
+      .post(`/auth/resend-verification`, { email }) // Kirim email sebagai body parameter
+      .then((res) => res.data);
+  };
+
+  const useResendVerification = () => {
+    const mutate = useMutation({
+      mutationFn: (email: string) => resendVerification(email),
+      onSuccess: (data) => {
+        console.log("Resend verification successful", data);
+        Swal.fire({
+          title: "Success!",
+          text:  `Your verification token is: ${data.data.verification_token}`,
+          icon: "success",
+          confirmButtonText: "OK",
+        }).then(() => {
+          router.push("/auth/verify");
+        })
+      },
+      onError: (error: any) => {
+        console.error("Error during resend verification:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: error.response?.data?.message || "An error occurred!",
+        });
+      },
+    });
+    return mutate;
+  };
+
   const getProfileAdmin = async (): Promise<AdminResponse> => {
     return axiosClient.get("/auth/profile-Admin").then((res) => res.data.data);
   };
 
   const useProfileAdmin = () => {
-    
     const { data, isLoading, isFetching } = useQuery({
       queryKey: ["/auth/profile-Admin"],
       queryFn: () => getProfileAdmin(),
@@ -173,7 +204,9 @@ const useAuthModule = () => {
   };
 
   const getProfileMember = async (): Promise<MemberResponse> => {
-    return axiosClient.get("/auth/profile/list/member").then((res) => res.data.data);
+    return axiosClient
+      .get("/auth/profile/list/member")
+      .then((res) => res.data.data);
   };
 
   const useProfileMember = () => {
@@ -184,7 +217,7 @@ const useAuthModule = () => {
       staleTime: 1000 * 60 * 60,
       refetchInterval: 1000 * 60 * 60,
       refetchOnWindowFocus: false,
-      // enabled : session?.user?.id !== undefined, 
+      // enabled : session?.user?.id !== undefined,
     });
     return { data, isLoading, isFetching };
   };
@@ -197,13 +230,20 @@ const useAuthModule = () => {
       staleTime: 1000 * 60 * 60,
       refetchInterval: 1000 * 60 * 60,
       refetchOnWindowFocus: false,
-      enabled : session?.user?.id !== undefined, 
+      enabled: session?.user?.id !== undefined,
     });
     return { data, isLoading, isFetching };
   };
-  
 
-  return { useRegister, useLogin, useProfile, useProfileAdmin, useVerify, useProfileMember };
+  return {
+    useRegister,
+    useLogin,
+    useProfile,
+    useProfileAdmin,
+    useVerify,
+    useProfileMember,
+    useResendVerification,
+  };
 };
 
 export default useAuthModule;

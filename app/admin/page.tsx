@@ -45,28 +45,34 @@ const AdminPage = () => {
         <div className="bg-white p-6 rounded-md shadow-md">
           <h2 className="text-xl font-semibold text-gray-800">Admin List</h2>
           <p className="text-gray-600 mt-2">Below is the list of all admins:</p>
-          <ul className="mt-4 space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
             {admins?.data && admins?.data.length > 0 ? (
               admins?.data.map((data, id) => (
-                <li key={id} className="flex items-center">
-
-                  <span className="font-semibold text-black mr-2">{data.role} :</span>
-
-                  <span className="font-semibold text-black">{data.name}</span>
-                  <span className="ml-2 text-gray-600">{data.email}</span>
-                </li>
+                <div
+                  key={id}
+                  className="bg-white border border-gray-200 rounded-lg shadow-md p-4"
+                >
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    {data.name}
+                  </h3>
+                  <p className="text-sm text-gray-600">{data.email}</p>
+                  <span className="inline-block mt-2 px-3 py-1 text-xs font-medium text-white bg-blue-500 rounded-full">
+                    {data.role}
+                  </span>
+                </div>
               ))
             ) : (
               <p className="text-gray-600">No admins found.</p>
             )}
-          </ul>
+          </div>
         </div>
 
-        <div className="mt-6 flex justify-end">
+        <div className="mt-6 flex justify-end space-x-4">
           <Button
             title="Logout"
             colorSchema="red"
             onClick={() => {
+              localStorage.removeItem("access_token");
               signOut();
             }}
           />

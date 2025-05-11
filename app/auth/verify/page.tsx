@@ -1,22 +1,21 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import useAuthModule from '@/app/auth/lib';
 import Swal from 'sweetalert2';
-
+import useAuthModule from "@/app/auth/lib";
+import Button from '@/components/Button';
 const VerifyEmailPage = () => {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [manualToken, setManualToken] = useState('');
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { useVerify } = useAuthModule();
+    const { useVerify } = useAuthModule();
   const { mutate: verifyEmail } = useVerify();
 
   const handleVerify = (token: string) => {
     verifyEmail(
-      { token },
+      { verification_token: token }, // Sesuaikan dengan interface VerifiyPayload
       {
         onSuccess: () => {
           setStatus('success');
@@ -83,7 +82,7 @@ const VerifyEmailPage = () => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-red-50">
       <div className="w-full max-w-md p-6 bg-white rounded shadow-md">
-        <h1 className="text-2xl font-bold text-red-600 text-center">Verification Failed</h1>
+        <h1 className="text-2xl font-bold text-blue-600 text-center">Verification</h1>
         <p className="mt-2 text-gray-700 text-center">
           We couldn&rsquo;t verify your email. Please try again.
         </p>
@@ -105,6 +104,13 @@ const VerifyEmailPage = () => {
           >
             Verify Token
           </button>
+          <Button
+            title="Resend Email"
+            colorSchema="blue"
+            onClick={() => {
+              router.push("/resend-email");
+            }}
+          />
         </form>
       </div>
     </div>

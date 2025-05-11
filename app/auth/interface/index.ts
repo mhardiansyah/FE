@@ -21,6 +21,7 @@ interface User {
   role: string;
   refresh_token: string;
   access_token: string;
+  verification_token: string;
 }
 
 // Tambahkan di index.ts
@@ -57,16 +58,26 @@ export interface rolepayload
 export interface RegisterPayload
   extends Pick<User, "name" | "email" | "password"> {}
 
-export interface RegisterResponse extends BaseResponseSuccess {}
+
+export interface VerifiyPayload extends Pick<User, "verification_token"> {}
+export interface VerifyResponse extends BaseResponseSuccess {
+  data: User;
+}
+
+export interface RegisterResponse extends BaseResponseSuccess {
+  data: User;
+
+}
+
 export interface LoginResponse extends BaseResponseSuccess {
   data: User;
 }
 
 export interface AdminResponse extends User {
-  data: User[]; 
+  data: User[];
 }
 export interface MemberResponse extends User {
-  data: User[]; 
+  data: User[];
 }
 
 export interface ProfileResponse extends BaseResponseSuccess {
