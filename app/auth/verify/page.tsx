@@ -80,36 +80,42 @@ const VerifyEmailPage = () => {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-red-50">
-      <div className="w-full max-w-md p-6 bg-white rounded shadow-md">
-        <h1 className="text-2xl font-bold text-blue-600 text-center">Verification</h1>
-        <p className="mt-2 text-gray-700 text-center">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-red-50 to-blue-50">
+      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg">
+        <h1 className="text-3xl font-extrabold text-blue-600 text-center">Email Verification</h1>
+        <p className="mt-4 text-gray-600 text-center">
           We couldn&rsquo;t verify your email. Please try again.
         </p>
-        <form onSubmit={handleSubmit} className="mt-6">
-          <label htmlFor="token" className="block mb-2 text-sm font-medium text-gray-700">
-            Enter Token:
-          </label>
-          <input
-            id="token"
-            type="text"
-            value={manualToken}
-            onChange={(e) => setManualToken(e.target.value)}
-            className="border border-gray-300 text-black rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-red-500"
-            placeholder="Enter your token"
-          />
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <div>
+            <label
+              htmlFor="token"
+              className="block mb-2 text-sm font-medium text-gray-700"
+            >
+              Enter Token:
+            </label>
+            <input
+              id="token"
+              type="text"
+              value={manualToken}
+              onChange={(e) => setManualToken(e.target.value)}
+              className="border border-gray-300 text-black rounded-lg px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter your token"
+            />
+          </div>
           <button
             type="submit"
-            className="mt-4 w-full bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+            className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-200"
           >
             Verify Token
           </button>
           <Button
             title="Resend Email"
-            colorSchema="blue"
+            colorSchema="green"
             onClick={() => {
               router.push("/resend-email");
             }}
+            className="w-full mt-2"
           />
         </form>
       </div>
